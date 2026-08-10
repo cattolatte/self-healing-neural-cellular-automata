@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import nn
 
 from src.data.preprocess import validate_target_tensor
 from src.model.state import extract_visible_channels
+from src.simulation.wound import WoundShape
 from src.training.losses import create_loss
 from src.training.optimizer import create_optimizer
 from src.training.pool import SamplePool
@@ -69,6 +70,7 @@ class Trainer:
         self.batch_size = batch_size
         self.visible_channels = tuple(visible_channels)
         self.scheduler = scheduler
+
         self._validate_device_compatibility()
 
     @classmethod
@@ -96,19 +98,26 @@ class Trainer:
         """
         _require_sections(
             config,
-            ("seed", "model", "training", "optimizer", "pool", "loss"),
+            ("seed", "model", "training", "optimizer", "pool", "loss", "damage"),
         )
+
         set_seed(
             seed=int(config["seed"]["value"]),
             deterministic=bool(config["seed"]["deterministic"]),
         )
+
         optimizer = create_optimizer(model.parameters(), config["optimizer"])
         scheduler = create_scheduler(optimizer, config.get("scheduler"))
+
         pool = SamplePool(
             initial_state,
             size=int(config["pool"]["size"]),
             reseed_fraction=float(config["pool"]["reseed_fraction"]),
+            damage_enabled=bool(config["damage"]["enabled"]),
+            wound_shape=cast(WoundShape, str(config["damage"]["shape"])),
+            wound_fraction=float(config["damage"]["fraction"]),
         )
+
         return cls(
             model=model,
             target=target,
@@ -138,7 +147,9 @@ class Trainer:
         """
         effective_batch_size = self.batch_size if batch_size is None else batch_size
         _validate_positive_integer(effective_batch_size, "batch_size")
+
         pool_batch = self.pool.sample(effective_batch_size, generator)
+
         self.model.train()
         self.optimizer.zero_grad(set_to_none=True)
 
@@ -147,20 +158,26 @@ class Trainer:
             steps=self.rollout_steps,
             generator=generator,
         )
+
         visible_states = extract_visible_channels(
             evolved_states,
             self.visible_channels,
         )
+
         target_batch = self.target.expand_as(visible_states)
         loss = self.loss_function(visible_states, target_batch)
+
         if loss.ndim != 0:
             raise ValueError("Training loss must be reduced to a scalar tensor.")
 
         loss.backward()
         self.optimizer.step()
+
         if self.scheduler is not None:
             self.scheduler.step()
+
         self.pool.replace(pool_batch, evolved_states)
+
         return TrainingStepResult(
             loss=float(loss.detach().item()),
             batch_size=effective_batch_size,
@@ -168,16 +185,19 @@ class Trainer:
 
     def _validate_device_compatibility(self) -> None:
         model_device = _get_model_device(self.model)
+
         if self.target.device != model_device:
             raise ValueError(
                 f"Target tensor must be on {model_device}, "
                 f"received {self.target.device}."
             )
+
         if self.pool.device != model_device:
             raise ValueError(
                 f"Sample pool must be on {model_device}, "
                 f"received {self.pool.device}."
             )
+
         if self.target.shape[2:] != self.pool.state_shape[1:]:
             raise ValueError(
                 "Target spatial dimensions must match the sampled automata state."
