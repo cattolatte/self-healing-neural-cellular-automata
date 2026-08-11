@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.evaluation.metrics import compute_mse
 
 
 def evaluate_healing_performance(

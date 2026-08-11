@@ -1,6 +1,5 @@
 """Unit tests for NCA dynamics, masking, and gradient flow."""
 
-import pytest
 import torch
 
 from src.model.alive_mask import AliveMask

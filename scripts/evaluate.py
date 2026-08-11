@@ -7,7 +7,6 @@ from pathlib import Path
 
 from src.data.load_target import load_target
 from src.evaluation import (
-    compute_mse,
     evaluate_healing_performance,
     evaluate_persistence,
 )
