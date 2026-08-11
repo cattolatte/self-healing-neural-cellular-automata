@@ -8,3 +8,5 @@ opencv-python
 tqdm
 pyyaml
 scipy
+pytest
+ruff
