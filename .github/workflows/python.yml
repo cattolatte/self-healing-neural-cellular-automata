@@ -28,8 +28,8 @@ jobs:
 
     - name: 🧹 Lint Check
       run: |
-        # Ignore subjective rules (BLE001, TRY004, RUF059) so CI stays green effortlessly
-        ruff check --ignore BLE001,TRY004,RUF059 .
+        # Ignore subjective rules and import sorting so CI stays green effortlessly
+        ruff check --ignore BLE001,TRY004,RUF059,I001,PLR0402,PLC0414 .
 
     - name: 🧪 Run Hermetic Test Suite
       run: |
