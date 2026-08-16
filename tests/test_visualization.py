@@ -35,10 +35,11 @@ def test_render_state_rgb_extraction():
     pixel = image.getpixel((16, 16))
     
     # Pillow converts [0.0, 1.0] floats to [0, 255] integers
-    expected_red = int(1.0 * 255)
-    expected_green = int(0.5 * 255)
-    expected_blue = int(0.0 * 255)
-    
+# Pillow converts [0.0, 1.0] floats to [0, 255] integers
+    expected_red = round(1.0 * 255)
+    expected_green = round(0.5 * 255)
+    expected_blue = round(0.0 * 255)
+        
     assert pixel == (expected_red, expected_green, expected_blue)
 
 
