@@ -18,30 +18,36 @@ class UpdateRule(nn.Module):
         hidden_channels: int | None = None,
     ) -> None:
         """Initialize the shared pointwise neural update network.
-
         Args:
             perception_channels: Number of input perception features.
             state_channels: Number of predicted state-delta channels.
             hidden_channels: Width of the intermediate pointwise layer. When
                 omitted, the perception feature count is used.
-
         Raises:
             ValueError: If any channel count is not positive.
         """
         super().__init__()
         _validate_positive_integer(perception_channels, "perception_channels")
         _validate_positive_integer(state_channels, "state_channels")
+        
         if hidden_channels is None:
             hidden_channels = perception_channels
+            
         _validate_positive_integer(hidden_channels, "hidden_channels")
-
+        
         self.perception_channels = perception_channels
         self.state_channels = state_channels
+        
         self.network = nn.Sequential(
             nn.Conv2d(perception_channels, hidden_channels, kernel_size=1),
             nn.ReLU(),
             nn.Conv2d(hidden_channels, state_channels, kernel_size=1),
         )
+
+        # FIX: Zero-initialize the final layer so the model starts as an identity function
+        with torch.no_grad():
+            self.network[2].weight.data.fill_(0.0)
+            self.network[2].bias.data.fill_(0.0)
 
     def forward(self, perception: torch.Tensor) -> torch.Tensor:
         """Predict residual state deltas from local perception features.

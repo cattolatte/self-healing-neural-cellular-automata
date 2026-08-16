@@ -25,10 +25,10 @@ model:
   alive_threshold: 0.1
 
 training:
-  epochs: 100
+  epochs: 3000
   batch_size: 8
   rollout_steps: 64
-  checkpoint_interval: 10
+  checkpoint_interval: 500
 
 optimizer:
   name: adam

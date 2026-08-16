@@ -166,10 +166,10 @@ def validate_tensor(
         )
     if dtype is not None and tensor.dtype != dtype:
         raise TypeError(f"{name} must use dtype {dtype}, received {tensor.dtype}.")
-    if device is not None and tensor.device != torch.device(device):
+    if device is not None and tensor.device.type != torch.device(device).type:
         raise ValueError(
-            f"{name} must be on device {torch.device(device)}, "
-            f"received {tensor.device}."
+            f"{name} must be on device type {torch.device(device).type}, "
+            f"received {tensor.device.type}."
         )
 
     _validate_dimension(tensor.shape[0], batch_size, "batch size", name)

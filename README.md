@@ -57,12 +57,14 @@ Channels **3–15** store latent information learned during training. These hidd
 Perception Layer (Identity + Sobel X + Sobel Y)
                        ↓
     Shared Neural Network (1x1 Convolutions)
+           [Zero-Initialized for Stability]
                        ↓
            Stochastic Residual Update
                        ↓
                     Alive Mask
                        ↓
                 Updated Cell State
+
 ```
 
 Every cell executes the same neural network independently.
@@ -81,7 +83,7 @@ Every cell executes the same neural network independently.
 * BPTT rollout training with MSE reconstruction loss
 * Adam optimizer and optional learning-rate scheduling
 * Sample pooling and checkpoint save/load
-* **Visualization Suite:** RGB mapping, GIF generation, MP4 encoding (via ImageIO), and raw frame exports
+* **Visualization Suite:** RGB mapping, GIF generation, MP4 encoding (via ImageIO and FFmpeg), and raw frame exports
 * **Evaluation Pipeline:** Standardized quantitative benchmarks for Growth, Structural Persistence, and Self-Healing
 * **CLI Orchestration:** Thin executable scripts for training, testing, and rendering
 
@@ -123,11 +125,13 @@ self-healing-neural-cellular-automata/
 * Torchvision
 * Pillow
 * Matplotlib
-* ImageIO
+* ImageIO & ImageIO-FFmpeg
 * OpenCV
 * SciPy
 * tqdm
 * PyYAML
+* Pytest
+* Ruff
 
 ## Configuration
 
@@ -144,9 +148,11 @@ This project exposes several command-line interfaces (CLIs) via the `scripts/` d
 To train the model from scratch using the default target and configuration:
 
 ```bash
-python -m scripts.train --config configs/train.yaml --target assets/targets/your_target.png
+python -m scripts.train --config configs/train.yaml --target assets/targets/target.png
 
 ```
+
+*(Note: A successful homeostatic organism requires approximately 3,000+ epochs to fully stabilize its hidden signaling channels).*
 
 ### 2. Evaluation
 
@@ -155,8 +161,8 @@ To run the full diagnostic suite (Growth -> Persistence -> Healing) and output t
 ```bash
 python -m scripts.evaluate \
     --config configs/eval.yaml \
-    --checkpoint checkpoints/model_epoch_100.pt \
-    --target assets/targets/your_target.png
+    --checkpoint checkpoints/model_epoch_3000.pt \
+    --target assets/targets/target.png
 
 ```
 
@@ -169,7 +175,7 @@ You can export animations as either `.gif` or `.mp4` files. You must specify whe
 ```bash
 python -m scripts.render_video \
     --config configs/eval.yaml \
-    --checkpoint checkpoints/model_epoch_100.pt \
+    --checkpoint checkpoints/model_epoch_3000.pt \
     --scenario healing
 
 ```
@@ -179,7 +185,7 @@ python -m scripts.render_video \
 ```bash
 python -m scripts.render_gif \
     --config configs/eval.yaml \
-    --checkpoint checkpoints/model_epoch_100.pt \
+    --checkpoint checkpoints/model_epoch_3000.pt \
     --scenario growth
 
 ```
@@ -191,17 +197,17 @@ To export publication-ready matplotlib figures evaluating the model's structural
 ```bash
 python -m scripts.export_figures \
     --config configs/eval.yaml \
-    --checkpoint checkpoints/model_epoch_100.pt \
-    --target assets/targets/your_target.png
+    --checkpoint checkpoints/model_epoch_3000.pt \
+    --target assets/targets/target.png
 
 ```
 
-### Running Tests
+### Testing
 
-To run the isolated unit testing suite to verify architectural invariants:
+To run the isolated unit testing suite to verify architectural invariants and prevent regression:
 
 ```bash
-pytest tests/
+pytest tests/ -v
 
 ```
 
@@ -209,13 +215,13 @@ pytest tests/
 
 ## Expected Results
 
-The final model successfully demonstrates:
+The final optimized model successfully demonstrates:
 
-- Growth from a single seed into a structured pattern
-- Stable tissue persistence over long unrolled horizons (1,000+ steps)
-- Recovery and regeneration after simulated geometric injuries (circle, square, half-grid masks)
-- Smooth decentralized regeneration
-- Decreasing reconstruction loss during BPTT training
+- Growth from a single seed into a structured pattern with near-zero MSE.
+- Stable tissue persistence over long unrolled horizons (1,000+ steps).
+- Autonomous recovery and regeneration after simulated geometric injuries (e.g., recovering ~50%+ of structural error without external intervention).
+- Smooth decentralized regeneration.
+- Prevention of the exploding gradient problem via strict zero-initialization of the residual update block.
 
 ## Future Improvements
 
@@ -233,6 +239,15 @@ Potential extensions include:
 - Mordvintsev, A., Randazzo, E., Niklasson, E., & Levin, M. *Growing Neural Cellular Automata*.
 - Distill: *Growing Neural Cellular Automata*
 - PyTorch Documentation
+
+## Authors
+
+This project was made by:
+
+| Name           | Roll Number  |
+| :------------- | :----------- |
+| John Murgani   | 23XU1A0553   |
+| Joshua Machela | 23XU1A0516   |
 
 ## License
 
